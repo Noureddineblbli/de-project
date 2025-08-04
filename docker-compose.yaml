@@ -79,6 +79,7 @@ services:
     image: apache/airflow:2.8.1
     container_name: airflow-webserver
     restart: always
+    command: webserver
     depends_on:
       airflow-init:
         condition: service_completed_successfully
