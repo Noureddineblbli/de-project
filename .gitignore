@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / C extensions
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+# This is crucial for security!
+.env
+
+# Airflow generated files
+# We mount the logs directory, but we don't want logs in our repo.
+logs/
+*.db
+*.pid
+unittests.cfg
+webserver_config.py
+
+# Docker
+# Ignore local data volumes managed by Docker
+postgres-dw-data/
+postgres-metastore-data/
+
+# IDE / Editor specific
+.idea/
+.vscode/
+
+# OS-specific
+.DS_Store
+Thumbs.db
