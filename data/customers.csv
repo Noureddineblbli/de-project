@@ -1,0 +1,11 @@
+customer_id,first_name,last_name,email,registration_date
+1,John,Doe,john.doe@email.com,2022-01-15
+2,Jane,Smith,jane.smith@email.com,2022-03-10
+3,Peter,Jones,peter.jones@email.com,2022-05-21
+4,Mary,Johnson,mary.j@email.com,2022-05-22
+5,null,Williams,susan.w@email.com,2022-06-03
+6,David,Brown,david.brown@email.com,2022-07-18
+7,Laura,Davis,,2022-08-01
+8,James,Miller,james.miller@email.com,2022-08-01
+9,Linda,Wilson,linda.wilson@email.com,2022-09-05
+10,Robert,Moore,robert.moore@email.com,2022-09-05

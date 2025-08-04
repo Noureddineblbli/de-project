@@ -1,0 +1,16 @@
+[flake8]
+# Set the maximum line length
+max-line-length = 120
+
+# List of error codes to ignore.
+# E501: line too long (we set our own max-line-length)
+# W503: line break before binary operator (black, a popular formatter, prefers this)
+ignore = E501, W503
+
+# Exclude directories that we don't need to lint
+exclude =
+    .git,
+    __pycache__,
+    logs,
+    .vscode,
+    .idea
