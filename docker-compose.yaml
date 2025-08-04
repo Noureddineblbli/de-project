@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres-dw-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dw_user -d dw_database"]
+      test: [ "CMD-SHELL", "pg_isready -U dw_user -d dw_database" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -33,11 +33,11 @@ services:
       - "7077:7077" # Spark Master Port
     volumes:
       - ./spark/jobs:/opt/bitnami/spark/jobs # Mount our Spark jobs folder
-      - ./data:/opt/bitnami/spark/data     # Mount our data folder
+      - ./data:/opt/bitnami/spark/data # Mount our data folder
 
   # -------------------- AIRFLOW --------------------
   # This setup is based on the official Airflow Docker Compose quick-start guide.
-  
+
   # The "metastore" for Airflow, a separate Postgres database.
   postgres-metastore:
     image: postgres:13
@@ -49,7 +49,7 @@ services:
     volumes:
       - postgres-metastore-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      test: [ "CMD-SHELL", "pg_isready -U airflow -d airflow" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -91,6 +91,7 @@ services:
       - AIRFLOW__CORE__FERNET_KEY=FBacS24a99edih393fTq-p4aT2yUPAd2d7Z0iL2b8hE=
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
       - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=true
+      - AIRFLOW__CORE__ADDITIONAL_PYTHON_DEPS=apache-airflow-providers-apache-spark
     ports:
       - "8080:8080" # The Airflow UI
     volumes:
@@ -98,11 +99,11 @@ services:
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
-  
+
   # Airflow's scheduler, which triggers DAG runs
   airflow-scheduler:
     image: apache/airflow:2.8.1
@@ -118,6 +119,7 @@ services:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres-metastore/airflow
       - AIRFLOW__CORE__FERNET_KEY=FBacS24a99edih393fTq-p4aT2yUPAd2d7Z0iL2b8hE=
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__CORE__ADDITIONAL_PYTHON_DEPS=apache-airflow-providers-apache-spark
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
