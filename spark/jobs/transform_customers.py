@@ -46,6 +46,17 @@ def main():
     print("Transformed data sample:")
     df_transformed.show(5)
 
+    # --- DATA QUALITY CHECKS ---
+    print("Performing data quality checks...")
+
+    # Check for nulls in the primary key column
+    null_count = df_transformed.filter(col("customer_id").isNull()).count()
+    if null_count > 0:
+        print(f"Data Quality Check FAILED: Found {null_count} nulls in customer_id.")
+        raise ValueError("Data quality check failed: customer_id contains null values.")
+    
+    print("Data Quality Check PASSED: No nulls in customer_id.")
+
     # --- LOAD ---
     # Define PostgreSQL connection properties
     # The hostname 'postgres-dw' is the service name from our docker-compose.yaml
