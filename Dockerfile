@@ -32,4 +32,4 @@ ENV JAVA_HOME=/usr/lib/jvm/default-java
 USER airflow
 
 # Install PySpark and the Spark provider
-RUN pip install --no-cache-dir apache-airflow-providers-apache-spark pyspark==3.5.0
+RUN pip install --no-cache-dir apache-airflow-providers-apache-spark apache-airflow-providers-postgres pyspark==3.5.0

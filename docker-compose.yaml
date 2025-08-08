@@ -116,6 +116,7 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
+      - ./sql:/opt/airflow/sql
     networks:
       - data-pipeline-network
     healthcheck:
@@ -149,6 +150,7 @@ services:
       - ./spark/jobs:/opt/bitnami/spark/jobs
       - ./data:/opt/bitnami/spark/data
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./sql:/opt/airflow/sql
     networks:
       - data-pipeline-network
 
