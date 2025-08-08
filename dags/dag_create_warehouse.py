@@ -9,8 +9,9 @@ with DAG(
     dag_id='create_warehouse_schema',
     start_date=pendulum.datetime(2024, 1, 1, tz="UTC"),
     catchup=False,
-    schedule_interval='@once',
+    schedule_interval=None,
     tags=['setup', 'data-warehouse'],
+    template_searchpath='/opt/airflow'
 ) as dag:
     # Task to create the tables and apply schema definitions
     create_schema_task = PostgresOperator(

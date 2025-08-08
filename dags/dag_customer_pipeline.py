@@ -9,7 +9,7 @@ with DAG(
     dag_id='customer_processing_pipeline',
     start_date=pendulum.datetime(2024, 1, 1, tz="UTC"),
     catchup=False,
-    schedule_interval='@once',
+    schedule_interval=None,
     tags=['spark', 'data-engineering'],
 ) as dag:
     # This is a command that tells Docker to run our spark-submit job
