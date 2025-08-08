@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  data-pipeline-network:
+    driver: bridge
+
 services:
   # -------------------- POSTGRES (DATA WAREHOUSE) --------------------
   postgres-dw:
@@ -10,9 +14,11 @@ services:
       - POSTGRES_PASSWORD=dw_password
       - POSTGRES_DB=dw_database
     ports:
-      - "5432:5432" # Exposes Postgres to your host machine
+      - "5432:5432"
     volumes:
       - postgres-dw-data:/var/lib/postgresql/data
+    networks:
+      - data-pipeline-network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U dw_user -d dw_database" ]
       interval: 5s
@@ -25,20 +31,31 @@ services:
     container_name: spark-master
     environment:
       - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
     ports:
-      - "8081:8080" # Spark Master Web UI (Note: Port 8081 to avoid conflict with Airflow)
-      - "7077:7077" # Spark Master Port
+      - "8081:8080" # Spark Master Web UI
+    networks:
+      - data-pipeline-network
     volumes:
-      - ./spark/jobs:/opt/bitnami/spark/jobs # Mount our Spark jobs folder
-      - ./data:/opt/bitnami/spark/data # Mount our data folder
+      - ./spark/jobs:/opt/bitnami/spark/jobs
+      - ./data:/opt/bitnami/spark/data
+
+  spark-worker:
+    image: bitnami/spark:3
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+    depends_on:
+      - spark-master
+    networks:
+      - data-pipeline-network
+    volumes:
+      - ./spark/jobs:/opt/bitnami/spark/jobs
+      - ./data:/opt/bitnami/spark/data
 
   # -------------------- AIRFLOW --------------------
-  # This setup is based on the official Airflow Docker Compose quick-start guide.
-
-  # The "metastore" for Airflow, a separate Postgres database.
   postgres-metastore:
     image: postgres:13
     container_name: postgres-metastore
@@ -46,6 +63,8 @@ services:
       - POSTGRES_USER=airflow
       - POSTGRES_PASSWORD=airflow
       - POSTGRES_DB=airflow
+    networks:
+      - data-pipeline-network
     volumes:
       - postgres-metastore-data:/var/lib/postgresql/data
     healthcheck:
@@ -54,9 +73,8 @@ services:
       timeout: 5s
       retries: 5
 
-  # Airflow service to initialize the database
   airflow-init:
-    image: apache/airflow:2.8.1
+    build: .
     container_name: airflow-init
     depends_on:
       postgres-metastore:
@@ -66,20 +84,21 @@ services:
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres-metastore/airflow
-      - AIRFLOW__CORE__FERNET_KEY=FBacS24a99edih393fTq-p4aT2yUPAd2d7Z0iL2b8hE= # Pre-generated for convenience
+      - AIRFLOW__CORE__FERNET_KEY=FBacS24a99edih393fTq-p4aT2yUPAd2d7Z0iL2b8hE=
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
     command: >
       bash -c "
         airflow db init &&
         airflow users create --role Admin --username admin --email admin@example.com --firstname Admin --lastname User --password admin
       "
+    networks:
+      - data-pipeline-network
 
-  # Airflow's web server, the UI you will interact with
   airflow-webserver:
-    image: apache/airflow:2.8.1
+    build: .
     container_name: airflow-webserver
     restart: always
-    command: webserver
+    command: airflow webserver
     depends_on:
       airflow-init:
         condition: service_completed_successfully
@@ -91,24 +110,25 @@ services:
       - AIRFLOW__CORE__FERNET_KEY=FBacS24a99edih393fTq-p4aT2yUPAd2d7Z0iL2b8hE=
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
       - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=true
-      - AIRFLOW__CORE__ADDITIONAL_PYTHON_DEPS=apache-airflow-providers-apache-spark
     ports:
-      - "8080:8080" # The Airflow UI
+      - "8080:8080"
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
+    networks:
+      - data-pipeline-network
     healthcheck:
       test: [ "CMD", "curl", "--fail", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Airflow's scheduler, which triggers DAG runs
   airflow-scheduler:
-    image: apache/airflow:2.8.1
+    build: .
     container_name: airflow-scheduler
     restart: always
+    command: airflow scheduler
     depends_on:
       airflow-init:
         condition: service_completed_successfully
@@ -119,14 +139,19 @@ services:
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres-metastore/airflow
       - AIRFLOW__CORE__FERNET_KEY=FBacS24a99edih393fTq-p4aT2yUPAd2d7Z0iL2b8hE=
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
-      - AIRFLOW__CORE__ADDITIONAL_PYTHON_DEPS=apache-airflow-providers-apache-spark
+      # Crucial for Spark driver communication
+      - SPARK_DRIVER_HOST=airflow-scheduler
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-    command: scheduler
+      # Mount Spark bits into the scheduler
+      - ./spark/jobs:/opt/bitnami/spark/jobs
+      - ./data:/opt/bitnami/spark/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - data-pipeline-network
 
-# Docker volumes to persist data
 volumes:
   postgres-dw-data:
   postgres-metastore-data:
