@@ -73,7 +73,7 @@ def main():
     df_transformed.write.jdbc(
         url=db_url,
         table=table_name,
-        mode="overwrite",
+        mode="append",
         properties=db_properties
     )
 
