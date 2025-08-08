@@ -54,7 +54,7 @@ def main():
     if null_count > 0:
         print(f"Data Quality Check FAILED: Found {null_count} nulls in customer_id.")
         raise ValueError("Data quality check failed: customer_id contains null values.")
-    
+
     print("Data Quality Check PASSED: No nulls in customer_id.")
 
     # --- LOAD ---

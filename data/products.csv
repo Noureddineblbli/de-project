@@ -1,0 +1,11 @@
+product_id,product_name,category,price
+101,Laptop,Electronics,1200.00
+102,Smartphone,Electronics,800.50
+103,Desk Chair,Furniture,150.75
+104,Coffee Maker,Appliances,89.99
+105,T-Shirt,Apparel,
+106,Running Shoes,Footwear,110.20
+107,Book,Books,14.99
+108,Headphones,Electronics,199.99
+109,Blender,null,45.50
+110,Jeans,Apparel,75.00
